@@ -1,0 +1,56 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    networks:
+      - bigdata-net
+
+  clickhouse-server:
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:  
+      - CLICKHOUSE_USER=user
+      - CLICKHOUSE_PASSWORD=pass
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    networks:
+      - bigdata-net
+
+  jupyter-spark:
+    image: jupyter/pyspark-notebook:latest
+    container_name: jupyter-spark
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+      JUPYTER_TOKEN: "mytoken123"
+    volumes:
+      - ./spark_to_clickhouse:/home/jovyan/work/spark_to_clickhouse
+      - ./drivers:/home/jovyan/jars
+    networks:
+      - bigdata-net
+    command: start-notebook.sh
+  
+    
+
+volumes:
+  clickhouse-data:
+
+networks:
+  bigdata-net:
